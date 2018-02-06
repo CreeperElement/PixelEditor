@@ -36,12 +36,6 @@ public class Controller {
     };
 
     @FXML
-    CheckMenuItem grayscaleCheck;
-
-    @FXML
-    CheckMenuItem negativeCheck;
-
-    @FXML
     ImageView imageViewer;
 
     @FXML
