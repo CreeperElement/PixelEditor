@@ -1,3 +1,10 @@
+/*
+ * SE 1021
+ * Winter 2018
+ * Lab Eight Image Viewer
+ * Seth Fenske
+ * Created 2/7/18
+ */
 package fenske;
 
 import java.io.File;
@@ -11,8 +18,13 @@ import java.util.Scanner;
 
 public class ErrorLogger {
 
-    static String LOG_PATH = "log.txt";
+    //Default logger location
+    private static String LOG_PATH = "log.txt";
 
+    /**
+     * Prints the stackTrace to the file as a new entrance
+     * @param stackTrace Dump exception stack trace here
+     */
     public static void Log(String stackTrace){
         File file = new File(LOG_PATH);
         String previousInfo = "";
@@ -34,6 +46,9 @@ public class ErrorLogger {
         }
     }
 
+    /**
+     * Takes the error log file, and whipes all text present. Leaing only a message saying when the last wipe occured.
+     */
     public static void clearLog(){
         File file = new File(LOG_PATH);
 
