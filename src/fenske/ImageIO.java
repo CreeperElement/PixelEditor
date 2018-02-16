@@ -9,9 +9,10 @@ package fenske;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Scanner;
@@ -23,9 +24,9 @@ public class ImageIO {
      * @param file File location to be read
      * @return BufferedImage containing the Image data
      */
-    public BufferedImage read(File file) throws IOException, CorruptDataException, NumberFormatException {
+    public Image read(File file) throws IOException, CorruptDataException, NumberFormatException {
         String[] fileNameParts = file.getName().split("\\.");
-        BufferedImage image = null;
+        Image image = null;
 
         switch (fileNameParts[fileNameParts.length - 1]) {
             case "msoe":
@@ -35,7 +36,7 @@ public class ImageIO {
                 image = readBMSOE(file);
                 break;
             default:
-                image = SwingFXUtils.fromFXImage(new Image(file.toURI().toURL().toString()), null);
+                image = new Image(file.toURI().toURL().toString());
                 break;
         }
         return image;
@@ -46,7 +47,7 @@ public class ImageIO {
      * @param image Image to be written
      * @param file File Location to be written to
      */
-    public void write(BufferedImage image, File file) throws IOException {
+    public void write(Image image, File file) throws IOException {
         //Split into filename, extension
         String[] fileNameParts = file.getName().split("\\.");
         //Extension letters
@@ -61,7 +62,7 @@ public class ImageIO {
                 break;
             default:
                 //Write the buffered image with the extension where file points it to.
-                javax.imageio.ImageIO.write(image, extension, file);
+                javax.imageio.ImageIO.write((RenderedImage) image, extension, file);
                 break;
         }
     }
@@ -71,7 +72,7 @@ public class ImageIO {
      * @param file File pointing to file
      * @return Image class of .msoe file
      */
-    private BufferedImage readMSOE(File file) throws IOException, CorruptDataException, NumberFormatException {
+    private Image readMSOE(File file) throws IOException, CorruptDataException, NumberFormatException {
         Scanner scanner = new Scanner(file);
         if(!scanner.nextLine().equals("MSOE")){
             throw new CorruptDataException("MSOE File Is Corrupt: Doesn't contain MSOE on first line.");
@@ -79,7 +80,7 @@ public class ImageIO {
         String[] numberArgs = scanner.nextLine().split(" ");
         int width = Integer.parseInt(numberArgs[0]);
         int height  = Integer.parseInt(numberArgs[1]);
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        WritableImage image = new WritableImage(width, height);
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width && scanner.hasNext(); x++) {
@@ -88,7 +89,7 @@ public class ImageIO {
                 int green = Integer.valueOf(color.substring(3, 5), 16);
                 int blue = Integer.valueOf(color.substring(5, 7), 16);
                 int alpha = Integer.valueOf(color.substring(7), 16);
-                image.setRGB(x, y, new Color(red, green, blue, alpha).getRGB());
+                image.getPixelWriter().setArgb(x, y, new Color(red, green, blue, alpha).getRGB());
             }
         }
 
@@ -101,7 +102,7 @@ public class ImageIO {
      * @param file File pointing to file
      * @return Image class of .bmsoe file
      */
-    private  BufferedImage readBMSOE(File file) throws IOException, CorruptDataException {
+    private  Image readBMSOE(File file) throws IOException, CorruptDataException {
         //Set up the stream which references the file
         FileInputStream fileInputStream = new FileInputStream(file);
         //DataInStream is easier to use than FileInStream, needs an existing stream to initialize
@@ -138,7 +139,7 @@ public class ImageIO {
         int height = ByteBuffer.wrap(data).getInt();
 
         //Image to be filled, and returned
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        WritableImage image = new WritableImage(width, height);
 
         //X and Y coords of the pixels
         int x = 0;
@@ -151,7 +152,7 @@ public class ImageIO {
             Color color = new Color(data[0]&0xff, data[1]&0xff, data[2]&0xff, data[3]&0xff);
 
             //Set the color at the pixel spot
-            image.setRGB(x, y, color.getRGB());
+            image.getPixelWriter().setArgb(x, y, color.getRGB());
 
             //If reached the end of the row of the pixels
             if(++x >= width){
@@ -172,13 +173,13 @@ public class ImageIO {
      * @param image Generic image class
      * @param file .msoe file
      */
-    private void writeMSOE(BufferedImage image, File file) throws IOException {
+    private void writeMSOE(Image image, File file) throws IOException {
         FileWriter writer = new FileWriter(file);
         writer.append("MSOE"+System.lineSeparator());
         writer.append(image.getWidth() + " " + image.getHeight() + System.lineSeparator());
         for(int y = 0; y < image.getHeight(); y++){
             for(int x = 0; x < image.getWidth(); x++){
-                Color color = new Color(image.getRGB(x, y));
+                Color color = new Color(image.getPixelReader().getArgb(x, y));
                 String red = String.format("%02X", color.getRed());
                 String green = String.format("%02X", color.getGreen());
                 String blue = String.format("%02X", color.getBlue());
@@ -196,7 +197,7 @@ public class ImageIO {
      * @param image Generic image class
      * @param file .bmsoe file
      */
-    private void writeBMSOE(BufferedImage image, File file) throws IOException {
+    private void writeBMSOE(Image image, File file) throws IOException {
         //Basic input stream of the specified file
         FileOutputStream outputStream = new FileOutputStream(file);
         //Data input stream is easier to use than file input stream, needs an existing input stream to work
@@ -209,8 +210,8 @@ public class ImageIO {
         }
 
         //Integers are 4 bytes, don't need to do anything fancy for writing the dimensions
-        dataOutputStream.writeInt(image.getWidth());
-        dataOutputStream.writeInt(image.getHeight());
+        dataOutputStream.writeInt((int)image.getWidth());
+        dataOutputStream.writeInt((int)image.getHeight());
 
         //Initialize loop variables. data is reused, x and y are reference points for the pixels, avoids nested loop
         byte[] data = new byte[4];
@@ -220,7 +221,7 @@ public class ImageIO {
         //While there are still pixels to loop through, use this instead of nested for loop
         while(x<image.getWidth()-1||y<image.getHeight()-1){
             //Get current pixel
-            Color c = new Color(image.getRGB(x,y));
+            Color c = new Color(image.getPixelReader().getArgb(x,y));
 
             //Write red, green, blue, alpha
             data[0] = (byte)c.getRed();

@@ -1,5 +1,6 @@
 package fenske;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
@@ -78,11 +79,11 @@ public class KernelController {
             ErrorLogger.Log(e.getMessage());
         }
 
-        image = controller.getImage();
+        image = SwingFXUtils.fromFXImage(controller.getImage(), null);
 
         BufferedImageOp op = new ConvolveOp(new Kernel(3, 3, kernel));
         BufferedImage result = op.filter(image, null);
-        controller.setImage(result);
+        controller.setImage(SwingFXUtils.toFXImage(result, null));
     }
 
 }

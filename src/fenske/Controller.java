@@ -24,9 +24,10 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.omg.CORBA.IMP_LIMIT;
 
+import javax.imageio.ImageWriteParam;
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Array;
 
@@ -49,7 +50,7 @@ public class Controller {
     /**Current file being displayed and worked on.*/
     private File selectedImageFile;
     /**Current loaded image*/
-    private BufferedImage selectedImage;
+    private Image selectedImage;
 
     /**Used to keep track of selected meme status.*/
     private boolean stickerSelected = false;
@@ -64,7 +65,6 @@ public class Controller {
         int blue = (int)(color.getBlue()*.0722);
         //int alpha = (int)(color.getAlpha())
         int finalColor = red+green+blue;
-        System.out.println(color.getAlpha());
         return new Color(finalColor, finalColor, finalColor, color.getAlpha());
     };
 
@@ -175,16 +175,18 @@ public class Controller {
     /**
      * Applies transformation to the BufferedImage
      * @param transformation Color scheme transformation
-     * @param bufferedImage Image that you want to change
+     * @param image Image that you want to change
      * @return A transformed image
      */
-    private BufferedImage transform(Transformation transformation, BufferedImage bufferedImage){
-        for(int i = 0; i < bufferedImage.getWidth(); i++){
-            for (int k = 0; k < bufferedImage.getHeight(); k++){
-                bufferedImage.setRGB(i, k , transformation.transform(i, k, new Color(bufferedImage.getRGB(i,k))).getRGB());
+    private Image transform(Transformation transformation, Image image){
+        for(int i = 0; i < image.getWidth(); i++){
+            for (int k = 0; k < image.getHeight(); k++){
+                //Convert for Image
+                WritableImage writableImage = new WritableImage(image.getPixelReader(), (int)image.getWidth(), (int)image.getHeight());
+                writableImage.getPixelWriter().setArgb(i, k , transformation.transform(i, k, new Color(image.getPixelReader().getArgb(i,k))).getRGB());
             }
         }
-        return bufferedImage;
+        return image;
     }
 
     @FXML
@@ -217,6 +219,7 @@ public class Controller {
     @FXML
     private void makeRedGray(){
         Transformation transformation;
+        WritableImage newImage = new WritableImage(selectedImage.getPixelReader(), (int)selectedImage.getWidth(), (int)selectedImage.getHeight());
         for(int y = 0; y < selectedImage.getHeight(); y++){
             if(y%2 == 0){
                 transformation = red;
@@ -224,10 +227,10 @@ public class Controller {
                 transformation = grayscale;
             }
             for(int x = 0; x < selectedImage.getWidth(); x++){
-                selectedImage.setRGB(x, y, transformation.transform(x, y, new Color(selectedImage.getRGB(x,y))).getRGB());
+                newImage.getPixelWriter().setArgb(x, y, transformation.transform(x, y, new Color(selectedImage.getPixelReader().getArgb(x,y))).getRGB());
             }
         }
-        setImage(selectedImage);
+        setImage(newImage);
     }
 
     Stage filterWindow;
@@ -237,7 +240,7 @@ public class Controller {
         filterWindow.show();
     }
 
-    BufferedImage image;
+    Image image;
 
     @FXML
     EventHandler mouseClick  = event -> {
@@ -251,9 +254,11 @@ public class Controller {
             int i = 0;
             int k = 0;
 
+            WritableImage newImage = new WritableImage(selectedImage.getPixelReader(), (int)selectedImage.getWidth(), (int)selectedImage.getHeight());
+
             while(i < image.getWidth() || k < image.getHeight()){
                 if(i < image.getWidth() && x+i < selectedImage.getWidth() && k < image.getHeight() && y+k < selectedImage.getHeight()){
-                    selectedImage.setRGB(x+i, y+k, image.getRGB(i, k));
+                    newImage.getPixelWriter().setArgb(x+i, y+k, image.getPixelReader().getArgb(i, k));
                 }
                 if(++i > selectedImage.getWidth()){
                     i = 0;
@@ -295,12 +300,12 @@ public class Controller {
      * ambiguity
      * @param image BufferedImage to be shown
      */
-    public void setImage(BufferedImage image){
+    public void setImage(Image image){
         selectedImage = image;
-        imageViewer.setImage(SwingFXUtils.toFXImage(selectedImage, null));
+        imageViewer.setImage(image);
     }
 
-    public BufferedImage getImage() {
+    public Image getImage() {
         return selectedImage;
     }
 
