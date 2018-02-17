@@ -23,7 +23,7 @@
         <Button mnemonicParsing="false" onAction="#blur" prefWidth="150.0" text="Blur" GridPane.columnIndex="3" GridPane.rowIndex="0" />
         <Button mnemonicParsing="false" onAction="#sharpen" prefWidth="150.0" text="Sharpen" GridPane.columnIndex="3" GridPane.rowIndex="1" />
         <Button mnemonicParsing="false" onAction="#edge" prefWidth="150.0" text="Edge" GridPane.columnIndex="3" GridPane.rowIndex="2" />
-        <TextField prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+        <TextField fx:id="Divisor" prefWidth="200.0" GridPane.columnIndex="0" GridPane.rowIndex="3" />
         <Button mnemonicParsing="false" onAction="#Apply" prefWidth="132.0" text="Apply" GridPane.columnIndex="1" GridPane.rowIndex="3" />
       </children>
       <columnConstraints>

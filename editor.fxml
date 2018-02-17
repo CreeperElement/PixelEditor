@@ -25,9 +25,6 @@
           </items>
         </Menu>
         <Menu mnemonicParsing="false" text="Edit">
-          <graphic>
-            <CheckBox mnemonicParsing="false" text="Place Stickers" fx:id="checkBox" onAction="#selectSticker"/>
-          </graphic>
           <items>
             <SeparatorMenuItem mnemonicParsing="false" text="" />
             <MenuItem mnemonicParsing="false" onAction="#makeGrayscale" text="Grayscale" />
@@ -55,5 +52,6 @@
         <Button layoutX="14.0" layoutY="214.0" mnemonicParsing="false" onAction="#showFilter" prefWidth="87.0" text="Show Filter" />
       </children>
     </AnchorPane>
+    <CheckBox fx:id="checkBox" layoutX="497.0" layoutY="273.0" mnemonicParsing="false" onAction="#selectSticker" text="Place Stickers" />
   </children>
 </AnchorPane>

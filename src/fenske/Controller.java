@@ -62,10 +62,10 @@ public class Controller {
         int red = (int)(color.getRed()*.2126);
         int green = (int)(color.getGreen()*.7152);
         int blue = (int)(color.getBlue()*.0722);
-        //int alpha = (int)(color.getAlpha())
+        int alpha = (int)(color.getAlpha());
         int finalColor = red+green+blue;
-        System.out.println(color.getAlpha());
-        return new Color(finalColor, finalColor, finalColor, color.getAlpha());
+
+        return new Color(finalColor, finalColor, finalColor, alpha);
     };
 
     /**Used in file chooser to filter out unwanted image formats.*/
@@ -181,7 +181,7 @@ public class Controller {
     private BufferedImage transform(Transformation transformation, BufferedImage bufferedImage){
         for(int i = 0; i < bufferedImage.getWidth(); i++){
             for (int k = 0; k < bufferedImage.getHeight(); k++){
-                bufferedImage.setRGB(i, k , transformation.transform(i, k, new Color(bufferedImage.getRGB(i,k))).getRGB());
+                bufferedImage.setRGB(i, k , transformation.transform(i, k, new Color(bufferedImage.getRGB(i,k), true)).getRGB());
             }
         }
         return bufferedImage;
@@ -192,7 +192,9 @@ public class Controller {
      * Turns the selected image to grayscale, mutates original BufferedImage
      */
     private void makeGrayscale(){
-        setImage(transform(grayscale, selectedImage));
+        if(selectedImage!=null){
+            setImage(transform(grayscale, selectedImage));
+        }
     }
 
     @FXML
@@ -201,9 +203,11 @@ public class Controller {
      */
     private void makeNegative(){
         Transformation negative = (x,y,color)->{
-            return new Color(255-color.getRed(), 255-color.getGreen(), 255-color.getBlue());
+            return new Color(new Color(255-color.getRed(), 255-color.getGreen(), 255-color.getBlue(), color.getAlpha()).getRGB(), true);
         };
-        setImage(transform(negative,selectedImage));
+        if(selectedImage!=null){
+            setImage(transform(negative,selectedImage));
+        }
     }
 
     @FXML
@@ -211,23 +215,27 @@ public class Controller {
      * Removes the green and blue channels of the image
      */
     private void makeRed(){
-        setImage(transform(red, selectedImage));
+        if(selectedImage!=null){
+            setImage(transform(red, selectedImage));
+        }
     }
 
     @FXML
     private void makeRedGray(){
         Transformation transformation;
-        for(int y = 0; y < selectedImage.getHeight(); y++){
-            if(y%2 == 0){
-                transformation = red;
-            }else{
-                transformation = grayscale;
+        if(selectedImage!=null){
+            for(int y = 0; y < selectedImage.getHeight(); y++){
+                if(y%2 == 0){
+                    transformation = red;
+                }else{
+                    transformation = grayscale;
+                }
+                for(int x = 0; x < selectedImage.getWidth(); x++){
+                    selectedImage.setRGB(x, y, transformation.transform(x, y, new Color(selectedImage.getRGB(x,y))).getRGB());
+                }
             }
-            for(int x = 0; x < selectedImage.getWidth(); x++){
-                selectedImage.setRGB(x, y, transformation.transform(x, y, new Color(selectedImage.getRGB(x,y))).getRGB());
-            }
+            setImage(selectedImage);
         }
-        setImage(selectedImage);
     }
 
     Stage filterWindow;
@@ -241,7 +249,7 @@ public class Controller {
 
     @FXML
     EventHandler mouseClick  = event -> {
-        if(event.getEventType() == MouseEvent.MOUSE_CLICKED && stickerSelected){
+        if(event.getEventType() == MouseEvent.MOUSE_CLICKED && stickerSelected && selectedImage!=null){
             double pixelDensityX = selectedImage.getWidth()/imageViewer.getFitWidth();
             double pixelDensityY = selectedImage.getHeight()/imageViewer.getFitHeight();
 
@@ -253,7 +261,7 @@ public class Controller {
 
             while(i < image.getWidth() || k < image.getHeight()){
                 if(i < image.getWidth() && x+i < selectedImage.getWidth() && k < image.getHeight() && y+k < selectedImage.getHeight()){
-                    selectedImage.setRGB(x+i, y+k, image.getRGB(i, k));
+                    selectedImage.setRGB(x+i, y+k, new Color(image.getRGB(i, k), true).getRGB());
                 }
                 if(++i > selectedImage.getWidth()){
                     i = 0;
@@ -278,14 +286,18 @@ public class Controller {
             File imageFile = chooser.showOpenDialog(null);
 
             ImageIO imageIO = new ImageIO();
-            try {
-                image = imageIO.read(imageFile);
-            } catch (IOException e) {
-                displayError("Error Encountered While Trying To Load: " + selectedImageFile.getAbsolutePath() + "\n File is corrupt", e.getMessage());
-                ErrorLogger.Log(e.getMessage());
-            } catch (CorruptDataException e) {
-                displayError("Error Encountered While Trying To Load: " + selectedImageFile.getAbsolutePath() + "\n File is corrupt", e.getMessage());
-                ErrorLogger.Log(e.getMessage());
+            if(imageFile==null){
+                checkBox.setSelected(false);
+            }else {
+                try {
+                    image = imageIO.read(imageFile);
+                } catch (IOException e) {
+                    displayError("Error Encountered While Trying To Load: " + selectedImageFile.getAbsolutePath() + "\n File is corrupt", e.getMessage());
+                    ErrorLogger.Log(e.getMessage());
+                } catch (CorruptDataException e) {
+                    displayError("Error Encountered While Trying To Load: " + selectedImageFile.getAbsolutePath() + "\n File is corrupt", e.getMessage());
+                    ErrorLogger.Log(e.getMessage());
+                }
             }
         }
     }

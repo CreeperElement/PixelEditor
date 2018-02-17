@@ -1,2 +1,2 @@
-Log Cleared On: 2018/02/07 15:07:50 1 1 Coordinate out of bounds! Coordinate out of bounds! 
-Coordinate out of bounds!
+Log Cleared On: 2018/02/07 15:07:50 1 1 Coordinate out of bounds! Coordinate out of bounds! Coordinate out of bounds! empty String empty String empty String empty String empty String Divisor Can't Be Equal To Zero Divisor Can't Be Equal To Zero Divisor Can't Be Equal To Zero Divisor Can't Be Equal To Zero Divisor Can't Be Equal To Zero empty String empty String empty String empty String The sum of the kernel components must be positive. The sum of the kernel components must be positive. 
+The sum of the kernel components must be positive.
